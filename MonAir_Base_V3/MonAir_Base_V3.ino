@@ -12,19 +12,19 @@
 
 // WiFi Credentials
 // Modify for assign your credentials
-const char *ssid = "galileo";
-const char *password = "";
+const char *ssid = "iPhone de Daniiez";
+const char *password = "fit12345";
 
 // MQTT Server
 const char *mqtt_server = "galiot.galileo.edu";
 // MQTT broker credentials
 const char *user = "monair";
 const char *passwd = "MONair2023";
-const char *clientID = "airmonq_006570A4";  // Modify to assign to a database
+const char *clientID = "airmonq_00657098";  // Modify to assign to a database
 
 //  Dashboard name
 // Modify to assign to a dashboard and database
-#define TEAM_NAME "airmon/006570A4"
+#define TEAM_NAME "airmon/00657098"
 #define NEOPIXEL_PIN 25
 #define NUMPIXELS 16
 
@@ -64,18 +64,13 @@ Adafruit_NeoPixel pixels(NUMPIXELS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
     - It is TRUE when the stablished time has passed, it allowes to send data
     - FALSE: when data where sent
 */
-boolean posting_flag = true;
 
 void setup() {
   Serial.begin(115200);
-  pinMode(15, OUTPUT);
-  digitalWrite(15, HIGH);
-
+  
   //WiFi setup
   setupWiFi();
-  Serial.print("ESP Board MAC Address:  ");
-  Serial.println(WiFi.macAddress());
-
+  
   //MQTT setup
   setupMQTT();
   timeClient.begin();
@@ -119,48 +114,42 @@ void setup() {
 }
 
 void loop() {
-  digitalWrite(15, LOW);
   //checking WiFi conection
   if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("sssssss");
     pixels.setPixelColor(0, pixels.Color(255, 0, 0));
     pixels.show();
+    delay(1000);
     setupWiFi();
   }
-  if (!mqtt_client.connected()) {
+ // if (!mqtt_client.connected()) {
+  if (mqtt_client.state() != 0) {
+    pixels.setPixelColor(0, pixels.Color(255, 255, 0));
+    pixels.show();
+    delay(3000);
+    Serial.println("reconnect LOOP");
     reconnect();
   }
-
 
   timeClient.update();
   if (timeClient.getSeconds() == 15) {
       if ((WiFi.status() != WL_CONNECTED) && (!mqtt_client.connect(clientID, user, passwd))) {
-        String str69 = "Estacion en línea";
+        String str69 = "Online"; // Se cambio revisar en Node-Red
         str69.toCharArray(msg, 50);
         mqtt_client.publish(getTopic("Online"), msg);
       }
     }
 
-
-  //if ((timeClient.getMinutes() % 5 == 00) && (timeClient.getSeconds() == 00) && posting_flag)
   //Checks posting_flag and post the data
-
   int posting_time = 2;
-  if ((timeClient.getMinutes() % posting_time == 0) && (timeClient.getSeconds() == 00) && posting_flag) {
+  if ((timeClient.getMinutes() % posting_time == 0) && (timeClient.getSeconds() == 00)) {
     Serial.print(String(posting_time) + " minutos publicando");
-    digitalWrite(15, HIGH);  //
-    delay(5000);
     postData();
     Serial.print("Datos publicados en MQTT Server: ");
     pixelSignals(0, 0, 255, 1000);
-    posting_flag = false;
-    digitalWrite(15, LOW);
-    // Serial.println("Getting into deep sleep mode");
-    //delay(5000);
-    //esp_deep_sleep((posting_time - 1)*60000000-5000000);
-  } else if (timeClient.getSeconds() != 00) {
-    posting_flag = true;
   }
-  preHeatSensor();
+
+  preHeatSensor(); 
 }
 
 
@@ -195,6 +184,8 @@ void setupWiFi() {
   Serial.println("WiFi connected.");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+  Serial.print("ESP Board MAC Address:  ");
+  Serial.println(WiFi.macAddress());
   //Indicates connection
   pixelSignals(0, 255, 0, 500);
   pixelSignals(0, 255, 0, 500);
@@ -372,7 +363,9 @@ void postData() {
     Serial.print("Estado del error de conexión: ");
     Serial.println(mqtt_client.state());
     setupWiFi();
+    Serial.println("Reconnect postdata else ");
     reconnect();
+    
   }
 }
 
