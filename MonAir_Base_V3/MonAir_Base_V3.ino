@@ -12,19 +12,19 @@
 
 // WiFi Credentials
 // Modify for assign your credentials
-const char *ssid = "iPhone de Daniiez";
-const char *password = "fit12345";
+const char *ssid = "galileo";
+const char *password = "";
 
 // MQTT Server
 const char *mqtt_server = "galiot.galileo.edu";
 // MQTT broker credentials
 const char *user = "monair";
 const char *passwd = "MONair2023";
-const char *clientID = "airmonq_00657098";  // Modify to assign to a database
+const char *clientID = "airmonq_00657097";  // Modify to assign to a database
 
 //  Dashboard name
 // Modify to assign to a dashboard and database
-#define TEAM_NAME "airmon/00657098"
+#define TEAM_NAME "airmon/00657097"
 #define NEOPIXEL_PIN 25
 #define NUMPIXELS 16
 
@@ -116,17 +116,18 @@ void setup() {
 void loop() {
   //checking WiFi conection
   if (WiFi.status() != WL_CONNECTED) {
-    Serial.println("sssssss");
     pixels.setPixelColor(0, pixels.Color(255, 0, 0));
     pixels.show();
-    delay(1000);
+    delay(500);
     setupWiFi();
   }
  // if (!mqtt_client.connected()) {
+  mqtt_client.loop(); //This should be called regularly to allow the client to process incoming messages and maintain its connection to the server.
+
   if (mqtt_client.state() != 0) {
     pixels.setPixelColor(0, pixels.Color(255, 255, 0));
     pixels.show();
-    delay(3000);
+    delay(500);
     Serial.println("reconnect LOOP");
     reconnect();
   }
@@ -141,7 +142,7 @@ void loop() {
     }
 
   //Checks posting_flag and post the data
-  int posting_time = 2;
+  int posting_time = 10;
   if ((timeClient.getMinutes() % posting_time == 0) && (timeClient.getSeconds() == 00)) {
     Serial.print(String(posting_time) + " minutos publicando");
     postData();
@@ -207,6 +208,7 @@ void reconnect() {
   // Loop until we're reconnected
   int cont = 1;
   while (!mqtt_client.connected()) {
+    setupWiFi();
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
 
