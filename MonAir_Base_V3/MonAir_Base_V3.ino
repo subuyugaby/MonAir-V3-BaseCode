@@ -16,19 +16,19 @@ const char *ssid = "galileo";
 const char *password = "";
 
 // MQTT Server
-const char *mqtt_server = "test.mosquitto.org";
+const char *mqtt_server = "galiot.galileo.edu";
 // MQTT broker credentials
-const char *user = "";
-const char *passwd = "";
-const char *clientID = "airmonq_005C540C";  // Modify to assign to a database
+const char *user = "monair";
+const char *passwd = "MONair2023";
+const char *clientID = "airmonq_006570A4";  // Modify to assign to a database
 
 //  Dashboard name
 // Modify to assign to a dashboard and database
-#define TEAM_NAME "airmon/005C540C"
+#define TEAM_NAME "airmon/006570A4"
 #define NEOPIXEL_PIN 25
 #define NUMPIXELS 16
 
-//DO NOT MODIFY 
+//DO NOT MODIFY
 // NTP conection variables
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP);
@@ -38,13 +38,10 @@ Bsec iaqSensor;
 String output, output2;
 
 //  Data variables
-int lastReadingTime, lastReadingTime2 = 0;
 double temp, ds18, hume, pres = 0;
 double aqi, sAQI, AQIa = 0;
 double CO2e, VOCe, gas, rssi, pm10, pm25 = 0;
 char msg[50];
-char msg1[50];
-char cnt[50];
 char msg_r[50];
 char topic_name[250];
 
@@ -81,7 +78,6 @@ void setup() {
 
   //MQTT setup
   setupMQTT();
-
   timeClient.begin();
   timeClient.setTimeOffset(-21600);
 
@@ -113,10 +109,7 @@ void setup() {
   /***** PMSA0031 sensor *********/
   Serial.println("");
   Serial.print("Checking PM25: ");
-  if (!particulas.begin_I2C())
-  //pmSerial.begin(9600);
-  //if (! particulas.begin_UART(&pmSerial))
-  {  // connect to the sensor over I2C
+  if (!particulas.begin_I2C()) {  // connect to the sensor over I2C
     Serial.println("Could not find PM 2.5 sensor!");
     while (1)
       delay(10);
@@ -126,42 +119,42 @@ void setup() {
 }
 
 void loop() {
-  //checking MQTT conection
-  digitalWrite(15, LOW);//
-   
+  digitalWrite(15, LOW);
+  //checking WiFi conection
+  if (WiFi.status() != WL_CONNECTED) {
+    pixels.setPixelColor(0, pixels.Color(255, 0, 0));
+    pixels.show();
+    setupWiFi();
+  }
   if (!mqtt_client.connected()) {
     reconnect();
   }
-  mqtt_client.loop();
-  timeClient.update();
-  //Serial.println(timeClient.getFormattedTime());
 
+
+  timeClient.update();
   if (timeClient.getSeconds() == 15) {
-    if (mqtt_client.connect(clientID, user, passwd)) {
-      //Client connected
-    } else {
-      setupWiFi();  //Reconnecting to WiFi
-      reconnect();
+      if ((WiFi.status() != WL_CONNECTED) && (!mqtt_client.connect(clientID, user, passwd))) {
+        String str69 = "Estacion en línea";
+        str69.toCharArray(msg, 50);
+        mqtt_client.publish(getTopic("Online"), msg);
+      }
     }
-    String str69 = "Estacion en línea";
-    str69.toCharArray(msg, 50);
-    mqtt_client.publish(getTopic("Online"), msg);
-  }
+
 
   //if ((timeClient.getMinutes() % 5 == 00) && (timeClient.getSeconds() == 00) && posting_flag)
   //Checks posting_flag and post the data
 
-  int posting_time = 10;
- if ( (timeClient.getMinutes()% posting_time == 0)&& (timeClient.getSeconds() == 00) && posting_flag){
-    Serial.print(String(posting_time) + " minutos publicando");  
-    digitalWrite(15, HIGH);//
+  int posting_time = 2;
+  if ((timeClient.getMinutes() % posting_time == 0) && (timeClient.getSeconds() == 00) && posting_flag) {
+    Serial.print(String(posting_time) + " minutos publicando");
+    digitalWrite(15, HIGH);  //
     delay(5000);
     postData();
     Serial.print("Datos publicados en MQTT Server: ");
     pixelSignals(0, 0, 255, 1000);
     posting_flag = false;
     digitalWrite(15, LOW);
-   // Serial.println("Getting into deep sleep mode");
+    // Serial.println("Getting into deep sleep mode");
     //delay(5000);
     //esp_deep_sleep((posting_time - 1)*60000000-5000000);
   } else if (timeClient.getSeconds() != 00) {
@@ -193,24 +186,18 @@ void setupWiFi() {
 
   //Waiting for connection
   while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+    Serial.print("WiFi no conectado");
     pixels.setPixelColor(0, pixels.Color(255, 0, 0));
     pixels.show();
   }
-  //Displays connection information
-  if (WiFi.status() == WL_CONNECTED) {
-    Serial.println("");
-    Serial.println("************** Connection information **************");
-    Serial.println("WiFi connected.");
-    Serial.println("IP address: ");
-    Serial.println(WiFi.localIP());
-    //Indicates connection
-    pixelSignals(0, 255, 0, 500);
-    pixelSignals(0, 255, 0, 500);
-  } else {
-    Serial.println("WiFi not connected.");
-  }
+  Serial.println("");
+  Serial.println("************** Connection information **************");
+  Serial.println("WiFi connected.");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+  //Indicates connection
+  pixelSignals(0, 255, 0, 500);
+  pixelSignals(0, 255, 0, 500);
 }
 
 // Helper function definitions
@@ -231,13 +218,14 @@ void reconnect() {
   while (!mqtt_client.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
-    Serial.println("connected");
-    pixelSignals(0, 255, 0, 500);
-    pixelSignals(0, 255, 0, 500);
-    pixelSignals(0, 255, 0, 500);
 
     if (mqtt_client.connect(clientID, user, passwd)) {
       //mqtt_client.subscribe(getTopic("rgb"));
+      Serial.println("connected");
+      pixelSignals(0, 255, 0, 500);
+      pixelSignals(0, 255, 0, 500);
+      pixelSignals(0, 255, 0, 500);
+
     } else {
 
       Serial.print("failed, rc=");
@@ -246,7 +234,7 @@ void reconnect() {
       // Wait 5 seconds before retrying
       cont += 1;
       if (cont > 150) {
-        ESP.restart();
+        break;
       }
       delay(5000);
     }
@@ -383,6 +371,7 @@ void postData() {
     Serial.println("Cliente NO conectado a MQTT Server");
     Serial.print("Estado del error de conexión: ");
     Serial.println(mqtt_client.state());
+    setupWiFi();
     reconnect();
   }
 }
