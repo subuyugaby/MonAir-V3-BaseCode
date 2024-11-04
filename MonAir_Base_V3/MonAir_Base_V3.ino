@@ -260,9 +260,9 @@ void postData() {
   mqtt_client.setServer(mqtt_server, 1883);
   mqtt_client.setCallback(callback);
   delay(100);
-  String missing = "Datos no enviados: \n";
+  String missing = "Datos no enviados:\n";
   String sent = "Datos enviados: \n";
-  if (mqtt_client.connect(clientID, user, passwd)) {
+  if (mqtt_client.connect(clientID, user, passwd)) {  
     Serial.println("");
     Serial.println("*** Cliente conectado a MQTT Server");
     //************ Posting Temperature************
