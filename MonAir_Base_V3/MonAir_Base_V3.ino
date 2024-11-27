@@ -139,6 +139,7 @@ void loop() {
         str69.toCharArray(msg, 50);
         mqtt_client.publish(getTopic("Online"), msg);
       }
+      delay(1500);
     }
 
   //Checks posting_flag and post the data
@@ -148,6 +149,7 @@ void loop() {
     postData();
     Serial.print("Datos publicados en MQTT Server: ");
     pixelSignals(0, 0, 255, 1000);
+    delay(1500);
   }
 
   preHeatSensor(); 
