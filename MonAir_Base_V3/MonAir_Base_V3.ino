@@ -151,6 +151,10 @@ void loop() {
     pixelSignals(0, 0, 255, 1000);
     delay(1500);
   }
+   
+  if((timeClient.getHours()% 0 == 0) && (timeClient.getMinutes()%36 == 0)&& (timeClient.getSeconds()%0 == 0)){
+    ESP.restart()
+  }
 
   preHeatSensor(); 
 }
@@ -178,7 +182,7 @@ void setupWiFi() {
 
   //Waiting for connection
   while (WiFi.status() != WL_CONNECTED) {
-    Serial.print("WiFi no conectado");
+    Serial.print(".");
     pixels.setPixelColor(0, pixels.Color(255, 0, 0));
     pixels.show();
   }
