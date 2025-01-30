@@ -20,11 +20,11 @@ const char *mqtt_server = "galiot.galileo.edu";
 // MQTT broker credentials
 const char *user = "monair";
 const char *passwd = "MONair2023";
-const char *clientID = "airmonq_00657097";  // Modify to assign to a database
+const char *clientID = "airmonq_ug02";  // Modify to assign to a database
 
 //  Dashboard name
 // Modify to assign to a dashboard and database
-#define TEAM_NAME "airmon/00657097"
+#define TEAM_NAME "airmon/ug02"
 #define NEOPIXEL_PIN 25
 #define NUMPIXELS 16
 
@@ -134,8 +134,8 @@ void loop() {
 
   timeClient.update();
   if (timeClient.getSeconds() == 15) {
-      if ((WiFi.status() != WL_CONNECTED) && (!mqtt_client.connect(clientID, user, passwd))) {
-        String str69 = "Online"; // Se cambio revisar en Node-Red
+      if ((WiFi.status() == WL_CONNECTED) && (mqtt_client.connect(clientID, user, passwd))) {
+        String str69 = "Estacion en línea"; // Se cambio revisar en Node-Red
         str69.toCharArray(msg, 50);
         mqtt_client.publish(getTopic("Online"), msg);
       }
@@ -143,7 +143,7 @@ void loop() {
     }
 
   //Checks posting_flag and post the data
-  int posting_time = 10;
+  int posting_time = 2;
   if ((timeClient.getMinutes() % posting_time == 0) && (timeClient.getSeconds() == 00)) {
     Serial.print(String(posting_time) + " minutos publicando");
     postData();
@@ -152,8 +152,8 @@ void loop() {
     delay(1500);
   }
    
-  if((timeClient.getHours()% 0 == 0) && (timeClient.getMinutes()%36 == 0)&& (timeClient.getSeconds()%0 == 0)){
-    ESP.restart()
+  if((timeClient.getHours()% 23 == 0) && (timeClient.getMinutes()%55 == 0) && (timeClient.getSeconds()% 55 == 0)){
+    ESP.restart();
   }
 
   preHeatSensor(); 
